@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-from darts.models.forecasting.pl_forecasting_module import PLPastCovariatesModule
+from darts.models.forecasting.pl_forecasting_module import PLForecastingModule
 
-class _MLPModule(PLPastCovariatesModule):
+class _MLPModule(PLForecastingModule):
     def __init__(
         self,
         input_dim: int,

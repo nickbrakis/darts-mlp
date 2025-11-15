@@ -6,12 +6,12 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="darts-mlp",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="nickbrakis",
+    author_email="nibrakis@gmail.com",
     description="Multi-Layer Perceptron (MLP) model for Darts time series forecasting",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/darts-mlp",
+    url="https://github.com/nickbrakis/darts-mlp",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
