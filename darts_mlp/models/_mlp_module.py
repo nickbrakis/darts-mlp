@@ -89,7 +89,7 @@ class _MLPModule(PLForecastingModule):
         Parameters
         ----------
         x_in : tuple
-            Tuple of (past_target, past_covariates) tensors for PastCovariatesModel.
+            Tuple of (past_target, past_covariates, static_covariates) tensors for PastCovariatesModel.
             Each tensor has shape (batch_size, seq_len, n_features).
 
         Returns
@@ -97,8 +97,8 @@ class _MLPModule(PLForecastingModule):
         torch.Tensor
             Output predictions of shape (batch_size, output_chunk_length, output_dim, nr_params).
         """
-        # Extract past target and past covariates
-        past_target, past_covariates = x_in
+        # Extract past target and past covariates (static covariates not used in MLP)
+        past_target, past_covariates, _ = x_in
         
         # Concatenate target and covariates if covariates exist
         if past_covariates is not None:

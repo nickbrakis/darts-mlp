@@ -93,7 +93,7 @@ class TestMLPModuleForward:
         
         # Create input tensor: (batch_size, seq_len, features)
         x = torch.randn(32, 10, 1)
-        y = module.forward((x, None))
+        y = module.forward((x, None, None))
         
         # Expected output: (batch_size, output_chunk_length, output_dim, nr_params)
         assert y.shape == (32, 5, 1, 1)
@@ -114,7 +114,7 @@ class TestMLPModuleForward:
         )
         
         x = torch.randn(16, 10, 3)
-        y = module.forward((x, None))
+        y = module.forward((x, None, None))
         
         assert y.shape == (16, 5, 3, 1)
     
@@ -136,7 +136,7 @@ class TestMLPModuleForward:
         target = torch.randn(8, 10, 1)
         covariates = torch.randn(8, 10, 2)
         
-        y = module.forward((target, covariates))
+        y = module.forward((target, covariates, None))
         
         assert y.shape == (8, 5, 1, 1)
     
@@ -157,7 +157,7 @@ class TestMLPModuleForward:
         
         for batch_size in [1, 8, 32, 64]:
             x = torch.randn(batch_size, 10, 1)
-            y = module.forward((x, None))
+            y = module.forward((x, None, None))
             assert y.shape == (batch_size, 5, 1, 1)
 
 

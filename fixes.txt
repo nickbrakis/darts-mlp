@@ -1,103 +1,98 @@
-INTEGRATION TEST FIXES - MLPModel
-==================================
-Date: 2025-11-14
+UPGRADING TO PLForecastingModule
+=================================
+Date: 2025-11-15
 
-All 4 integration tests in TestMLPModelIntegration now pass successfully.
+MIGRATION FROM PLPastCovariatesModule TO PLForecastingModule
+------------------------------------------------------------
 
-ERRORS ENCOUNTERED AND FIXES APPLIED:
---------------------------------------
+The MLP model was upgraded from using PLPastCovariatesModule to the more general 
+PLForecastingModule. This provides better integration with the Darts framework and 
+more flexibility while maintaining the same functionality.
 
-1. TypeError: 'bool' object is not callable
-   Location: MLPModel.py - _supports_static_covariates
-   Cause: Method was defined as @property but Darts framework expects it to be 
-          a callable method (not a property)
-   Fix: Removed @property decorator, changed to regular method returning bool
+KEY CHANGES:
+------------
+
+1. Module Inheritance (_MLPModule)
+   Changed from: PLPastCovariatesModule
+   Changed to: PLForecastingModule
+   
+   Import changed:
+     from darts.models.forecasting.pl_forecasting_module import PLPastCovariatesModule
+   To:
+     from darts.models.forecasting.pl_forecasting_module import PLForecastingModule
+   
+   PLForecastingModule is the base class and provides:
+   - Loss computation
+   - Training/validation loops
+   - Metric tracking
+   - Model checkpointing
+
+2. Tuple Unpacking - train_sample Structure
+   Location: MLPModel._create_model()
+   
+   The train_sample tuple contains 6 elements (vs 4 in PLPastCovariatesModule):
+   (past_target, past_covariates, static_covariates, future_covariates, 
+    future_past_covariates, future_target)
    
    Changed from:
-     @property
-     def _supports_static_covariates(self) -> bool:
-   
-   To:
-     def _supports_static_covariates(self) -> bool:
-
-
-2. ValueError: not enough values to unpack (expected 6, got 4)
-   Location: MLPModel.py - _create_model() method
-   Cause: train_sample tuple for PastCovariatesModel contains 4 elements:
-          (past_target, past_covariates, static_covariates, future_target)
-          not 6 elements (which is for models with future covariates)
-   Fix: Changed unpacking from 6 to 4 values
-   
-   Changed from:
-     (past_target, past_covariates, _, _, _, _) = train_sample
-   
-   To:
      past_target, past_covariates, _, _ = train_sample
-
-
-3. TypeError: got multiple values for keyword argument 'input_chunk_length'
-   Location: MLPModel.py - _create_model() method
-   Cause: self.pl_module_params already contains input_chunk_length and 
-          output_chunk_length, so passing them explicitly causes duplicate
-   Fix: Removed explicit parameters since they're included in **self.pl_module_params
-   
-   Removed lines:
-     input_chunk_length=self.input_chunk_length,
-     output_chunk_length=self.output_chunk_length,
-
-
-4. ValueError: not enough values to unpack (expected 3, got 2)
-   Location: _MLPModule.py - forward() method
-   Cause: PastCovariatesModel passes x_in as tuple with 2 elements:
-          (past_target, past_covariates)
-          not 3 elements (which includes future_covariates for other models)
-   Fix: Changed unpacking from 3 to 2 values
-   
-   Changed from:
-     past_target, past_covariates, _ = x_in
    
    To:
+     past_target, past_covariates, _, _, _, _ = train_sample
+
+3. Tuple Unpacking - forward() Input Structure  
+   Location: _MLPModule.forward()
+   
+   The x_in tuple contains 3 elements (vs 2 in PLPastCovariatesModule):
+   (past_target, past_covariates, static_covariates)
+   
+   Changed from:
      past_target, past_covariates = x_in
-
-
-5. ValueError: The provided validation time series dataset is too short
-   Location: test_mlp_model.py - test_fit_with_validation()
-   Cause: Validation set had only 20 points (series[80:]) but model requires
-          input_chunk_length (20) + output_chunk_length (5) = 25 points minimum
-   Fix: Changed train/validation split to provide more validation data
-   
-   Changed from:
-     train = simple_series[:80]  # 80 points
-     val = simple_series[80:]    # 20 points - TOO SHORT
    
    To:
-     train = simple_series[:70]  # 70 points
-     val = simple_series[70:]    # 30 points - SUFFICIENT
+     past_target, past_covariates, _ = x_in
+
+4. Test Cases Updated
+   Location: tests/test_mlp_model.py
+   
+   All forward() method tests updated to pass 3-element tuples:
+   
+   Changed from:
+     module.forward((target, covariates))
+   
+   To:
+     module.forward((target, covariates, None))
+
+5. Static Covariates Support
+   Location: MLPModel._supports_static_covariates()
+   
+   Must be a regular method (not @property) returning bool as per 
+   Darts framework requirements.
 
 
 TEST RESULTS:
 -------------
-✓ test_fit_univariate - PASSED
-✓ test_predict_after_fit - PASSED  
-✓ test_fit_multivariate - PASSED
-✓ test_fit_with_validation - PASSED
+All 16 tests passing successfully:
+✓ TestMLPModelInit (3 tests)
+✓ TestMLPModuleArchitecture (2 tests)
+✓ TestMLPModuleForward (4 tests)
+✓ TestMLPModelIntegration (4 tests)
+✓ TestMLPModelEdgeCases (2 tests)
+✓ TestMLPModelPerformance (1 test)
 
-4 passed, 5 warnings in 15.35s
-
-WARNINGS (non-critical):
-------------------------
-- Unknown pytest.mark.slow - can be registered in pytest.ini if needed
-- 'pin_memory' warnings for DataLoader (expected when no GPU available)
+16 passed, 8 warnings in 229.24s (0:03:49)
 
 
 KEY LEARNINGS:
 --------------
-1. PastCovariatesModel has different tuple structures than models with future
-   covariates - always check the actual tuple length
-   
-2. Parent class methods should match their signature (property vs method)
+1. PLForecastingModule (base class) uses longer tuples than PLPastCovariatesModule:
+   - train_sample: 6 elements instead of 4
+   - forward input: 3 elements instead of 2
 
-3. PyTorch Lightning module parameters are auto-populated via **kwargs and 
-   should not be passed explicitly if already in pl_module_params
+2. The extra elements accommodate future covariates and static covariates which 
+   may not be used by all model types but must be handled in unpacking
 
-4. Validation sets need sufficient length: input_chunk + output_chunk minimum
+3. Parent class method signatures must match exactly (method vs property)
+
+4. All tests must be updated to match the new tuple structure when migrating 
+   between module types

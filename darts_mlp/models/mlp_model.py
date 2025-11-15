@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Union
 from darts_mlp.models._mlp_module import _MLPModule
 from darts.models.forecasting.torch_forecasting_model import PastCovariatesTorchModel
-from darts.models.forecasting.pl_forecasting_module import PLPastCovariatesModule
+from darts.models.forecasting.pl_forecasting_module import PLForecastingModule
 
 
 class MLPModel(PastCovariatesTorchModel):
@@ -170,9 +170,9 @@ class MLPModel(PastCovariatesTorchModel):
         return False
 
     def _create_model(self, train_sample) -> torch.nn.Module:
-        # samples are made of (past_target, past_covariates, static_covariates, future_target)
+        # samples are made of (past_target, past_covariates, static_covariates, future_covariates, future_past_covariates, future_target)
         # for PastCovariatesModel
-        past_target, past_covariates, _, _ = train_sample
+        past_target, past_covariates, _, _, _, _ = train_sample
         
         # Calculate input dimension (target + past covariates if present)
         input_dim = past_target.shape[1] + (
