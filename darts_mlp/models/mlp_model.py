@@ -165,14 +165,19 @@ class MLPModel(PastCovariatesTorchModel):
         self.activation = activation
         self.batch_norm = batch_norm
 
+    @property
+    def supports_multivariate(self) -> bool:
+        """MLPModel supports multivariate time series."""
+        return True
+
     def _supports_static_covariates(self) -> bool:
         """MLPModel does not support static covariates."""
         return False
 
     def _create_model(self, train_sample) -> torch.nn.Module:
-        # samples are made of (past_target, past_covariates, static_covariates, future_covariates, future_past_covariates, future_target)
-        # for PastCovariatesModel
-        past_target, past_covariates, _, _, _, _ = train_sample
+        # In u8darts 0.28.0, for PastCovariatesTorchModel, train_sample has 4 elements:
+        # (past_target, past_covariates, historic_future_covariates, static_covariates)
+        past_target, past_covariates, _, _ = train_sample
         
         # Calculate input dimension (target + past covariates if present)
         input_dim = past_target.shape[1] + (

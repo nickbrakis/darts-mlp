@@ -89,7 +89,8 @@ class _MLPModule(PLForecastingModule):
         Parameters
         ----------
         x_in : tuple
-            Tuple of (past_target, past_covariates, static_covariates) tensors for PastCovariatesModel.
+            Tuple containing at least (past_target, past_covariates) tensors.
+            May contain additional elements depending on the context.
             Each tensor has shape (batch_size, seq_len, n_features).
 
         Returns
@@ -97,8 +98,10 @@ class _MLPModule(PLForecastingModule):
         torch.Tensor
             Output predictions of shape (batch_size, output_chunk_length, output_dim, nr_params).
         """
-        # Extract past target and past covariates (static covariates not used in MLP)
-        past_target, past_covariates, _ = x_in
+        # Handle variable input structure - extract first two elements
+        # x_in can be (past_target, past_covariates) or (past_target, past_covariates, ...)
+        past_target = x_in[0]
+        past_covariates = x_in[1] if len(x_in) > 1 else None
         
         # Concatenate target and covariates if covariates exist
         if past_covariates is not None:
@@ -117,3 +120,52 @@ class _MLPModule(PLForecastingModule):
         y = y.reshape(batch_size, self.output_chunk_length, self.output_dim, self.nr_params)
         
         return y
+
+    def _produce_train_output(self, input_batch):
+        """
+        Produce the output for training.
+        
+        This method is called during training to generate predictions from the input batch.
+        
+        Parameters
+        ----------
+        input_batch : tuple
+            The input batch from the training dataset.
+            
+        Returns
+        -------
+        torch.Tensor
+            The model's predictions for the training batch (4D).
+        """
+        # For PastCovariatesModel, input_batch contains (past_target, past_covariates)
+        return self(input_batch)
+
+    def _get_batch_prediction(self, n, input_batch, roll_size):
+        """
+        Generate predictions for a batch.
+        
+        This method is called during inference to generate predictions.
+        
+        Parameters
+        ----------
+        n : int
+            The forecast horizon (number of time steps to predict).
+        input_batch : tuple
+            The input batch for prediction.
+        roll_size : int
+            The number of time steps to roll forward for autoregressive prediction.
+            
+        Returns
+        -------
+        torch.Tensor
+            The model's predictions (3D for deterministic, 4D for probabilistic).
+        """
+        # For non-autoregressive models (n <= output_chunk_length), just forward pass
+        output = self(input_batch)
+        
+        # For deterministic forecasts (nr_params=1), squeeze the last dimension
+        # to get (batch_size, output_chunk_length, output_dim)
+        if self.nr_params == 1:
+            output = output.squeeze(-1)
+            
+        return output

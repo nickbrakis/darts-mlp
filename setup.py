@@ -26,7 +26,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "darts>=0.24.0",
+        "u8darts>=0.28.0", 
         "torch>=1.9.0",
         "numpy>=1.19.0",
     ],
