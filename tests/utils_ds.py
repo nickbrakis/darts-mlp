@@ -159,7 +159,7 @@ def multiple_dfs_to_ts_file(res_l, id_l, ts_id_l, save_dir, save=True, format="l
     logging.info("\nTurning dataframe list to multiple ts file...")
     for ts_num, (ts, id_ts, ts_id_ts) in tqdm(list(enumerate(zip(res_l, id_l, ts_id_l)))):
         if type(ts) == darts.timeseries.TimeSeries:
-            ts = [ts.univariate_component(i).to_dataframe() for i in range(ts.n_components)]
+            ts = [ts.univariate_component(i).pd_dataframe() for i in range(ts.n_components)]
         for comp_num, (comp, id, ts_id) in enumerate(zip(ts, id_ts, ts_id_ts)):
             comp.columns.values[0] = value_name
             if format == "short":

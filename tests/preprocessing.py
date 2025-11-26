@@ -51,7 +51,7 @@ def split_nans(covariates, past_covs, future_covs):
         covariates = [covariates]
 
     for i, covariate in enumerate(covariates):
-        if covariate.to_dataframe().isnull().sum().sum() > 0:
+        if covariate.pd_dataframe().isnull().sum().sum() > 0:
             covariate = extract_subseries(covariate, min_gap_size=1, mode='any')
 
             print(f"Spliting train into {len(covariate)} consecutive series\n")
@@ -94,11 +94,11 @@ def split_dataset(covariates, val_start_date_str, test_start_date_str,
                 covariate_val, covariate_test = covariate_val.split_before(
                     pd.Timestamp(test_start_date_str))
             
-            if covariate_val.to_dataframe().isnull().sum().sum() > 0:
+            if covariate_val.pd_dataframe().isnull().sum().sum() > 0:
                 print(f"Validation set can not have any nan values\n")
                 logging.info(f"Validation set can not have any nan values\n")
                 raise NanInSet()
-            if covariate_test.to_dataframe().isnull().sum().sum() > 0:
+            if covariate_test.pd_dataframe().isnull().sum().sum() > 0:
                 print(f"Test set can not have any nan values\n")
                 logging.info(f"Test set can not have any nan values\n")
                 raise NanInSet()

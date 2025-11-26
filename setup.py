@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="darts-mlp",
-    version="0.1.0",
+    version="1.1.0",
     author="nickbrakis",
     author_email="nibrakis@gmail.com",
     description="Multi-Layer Perceptron (MLP) model for Darts time series forecasting",
@@ -26,9 +26,11 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "u8darts>=0.28.0", 
-        "torch>=1.9.0",
-        "numpy>=1.19.0",
+        "u8darts==0.28.0", 
+        "torch==2.2.2",
+        "numpy==1.26.4",
+        "pytorch-lightning==2.2.1",
+        "torchmetrics==1.3.2",
     ],
     extras_require={
         "dev": [
