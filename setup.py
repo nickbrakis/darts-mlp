@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="darts-mlp",
-    version="1.1.0",
+    version="0.2.0",
     author="nickbrakis",
     author_email="nibrakis@gmail.com",
     description="Multi-Layer Perceptron (MLP) model for Darts time series forecasting",
